@@ -25,6 +25,14 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     bool need_send_ack = seg.length_in_sequence_space();
     // you code here.
     //你需要考虑到ACK包、RST包等多种情况
+
+    // 如果设置 RST, 将入站流和出站流都设置为错误状态,永久终止链接
+    if(seg.header().rst)
+    {
+        _receiver.stream_out().set_error();
+        _sender.stream_in().set_error();
+        _is_active = false;
+    }
     
     //状态变化(按照个人的情况可进行修改)
     // 如果是 LISEN 到了 SYN

@@ -28,15 +28,43 @@ void Router::add_route(const uint32_t route_prefix,
                        const size_t interface_num) {
     cerr << "DEBUG: adding route " << Address::from_ipv4_numeric(route_prefix).ip() << "/" << int(prefix_length)
          << " => " << (next_hop.has_value() ? next_hop->ip() : "(direct)") << " on interface " << interface_num << "\n";
-
-    DUMMY_CODE(route_prefix, prefix_length, next_hop, interface_num);
-    // Your code here.
+    
+    // 插入新的路由表项
+    _route_table.emplace_back(route_prefix,prefix_length,next_hop,interface_num);
 }
 
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
-    DUMMY_CODE(dgram);
-    // Your code here.
+    // DUMMY_CODE(dgram);
+    
+    // 查找匹配的路由 如果没有 丢弃数据报
+    const uint32_t dst_ip = dgram.header().dst;
+    auto best_match=_route_table.end();
+    // uint8_t best_match_size = 0;
+
+    // 遍历路由表查询
+    for(auto it=_route_table.begin();it!=_route_table.end();it++)
+    {
+        if((*it).route_prefix==0||((*it).route_prefix>>(32-(*it).prefix_length))==(dst_ip>>(32-(*it).prefix_length)))
+        {
+            // 找到合适的
+            // 从中选择prefix_length最长的
+            if(best_match==_route_table.end()||(*it).prefix_length>(*best_match).prefix_length)
+            {
+                best_match=it;
+            }
+        }
+    }
+
+    // 找到了 并且ttl大于1 才发送到下一跳
+    if(best_match!=_route_table.end()&&dgram.header().ttl>1)
+    {
+        dgram.header().ttl--;
+        if(best_match->next_hop.has_value())
+            interface((*best_match).interface_num).send_datagram(dgram,best_match->next_hop.value());
+        else
+            interface((*best_match).interface_num).send_datagram(dgram,Address::from_ipv4_numeric(dst_ip));
+    }
 }
 
 void Router::route() {

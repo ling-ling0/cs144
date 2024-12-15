@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <queue>
+#include <map>
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -31,6 +32,24 @@ class TCPSender {
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    // 添加的变量
+    // 当前的重传超时时间
+    uint64_t _current_rto;
+    // 当前等待时间
+    uint64_t _waiting_time{0};
+    // 当前重传次数
+    uint64_t _retry_times{0};
+    // 当前未确认队列
+    std::queue<std::pair<size_t, TCPSegment>> _not_apply{}; 
+    // syn是否发送
+    bool _syn_send{false};
+    // fin是否发送
+    bool _fin_send{false};
+    // window size
+    uint64_t _window_size{1};
+    // 当前使用的字节数
+    uint64_t _using_bytes{0};
 
   public:
     //! Initialize a TCPSender
