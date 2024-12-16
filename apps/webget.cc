@@ -1,4 +1,5 @@
-#include "socket.hh"
+//#include "socket.hh"
+#include "tcp_sponge_socket.hh"
 #include "util.hh"
 
 #include <cstdlib>
@@ -8,7 +9,7 @@ using namespace std;
 
 void get_URL(const string &host, const string &path) {
   Address address(host,"http");
-  TCPSocket tcpsocket;
+  FullStackSocket tcpsocket;
   std::string option_val;
   option_val+="GET "+path+" HTTP/1.1\r\n";
   option_val+="HOST: "+host+"\r\n";
@@ -25,6 +26,8 @@ void get_URL(const string &host, const string &path) {
     tcpsocket.read(result);
     cout<<result;
   }
+
+  tcpsocket.wait_until_closed();
 }
 
 int main(int argc, char *argv[]) {
